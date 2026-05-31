@@ -1,0 +1,4 @@
+build/
+deps/stb/
+output.png
+.DS_Store
