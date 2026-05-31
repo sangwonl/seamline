@@ -38,6 +38,7 @@ This produces `libseamline.a` (static library).
 // From file paths
 const char* paths[] = {"frame_001.png", "frame_002.png", "frame_003.png"};
 SeamlineOptions opts = seamline_default_options();
+opts.auto_crop = 1;  // handle slight width differences between frames
 SeamlineResult result = seamline_stitch_files(paths, 3, opts);
 
 if (result.ok) {
@@ -84,6 +85,7 @@ typedef struct {
 typedef struct {
     double match_threshold;  // Max avg pixel diff for row matching (0-255, default: 5.0)
     int horizontal;          // 0 = vertical stitch (default), 1 = horizontal
+    int auto_crop;           // 0 = error on width mismatch (default), 1 = crop to min width
 } SeamlineOptions;
 
 typedef struct {
@@ -112,6 +114,7 @@ typedef struct {
 |-------|---------|-------------|
 | `match_threshold` | `5.0` | Pixel difference tolerance for matching rows. Increase for noisy captures (e.g., 10-15). Decrease for pixel-perfect sources (e.g., 1-2). |
 | `horizontal` | `0` | Set to `1` for horizontal scroll captures (left-to-right stitching). |
+| `auto_crop` | `0` | Set to `1` to automatically crop images to the minimum width when dimensions differ slightly (e.g., scrollbar appearing/disappearing during capture). Without this, width mismatch returns an error. |
 
 ## Platform Integration
 
@@ -196,6 +199,22 @@ const outputPath = await SeamlineModule.stitch([
 | `SEAMLINE_BUILD_TESTS` | `ON` | Build test suite |
 | `SEAMLINE_BUILD_SHARED` | `OFF` | Build shared library instead of static |
 | `SEAMLINE_BUILD_CLI` | `OFF` | Build CLI tool for testing |
+
+### CLI Tool
+
+```bash
+cmake -B build -DSEAMLINE_BUILD_CLI=ON
+cmake --build build --target stitch_cli
+
+# Vertical stitch
+./build/stitch_cli output.png frame1.png frame2.png frame3.png
+
+# With auto-crop (handles slight width differences)
+./build/stitch_cli output.png frame1.png frame2.png --auto-crop
+
+# Horizontal stitch
+./build/stitch_cli output.png left.png right.png --horizontal --auto-crop
+```
 
 ### iOS (xcframework)
 
